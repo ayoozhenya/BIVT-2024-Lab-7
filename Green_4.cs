@@ -1,214 +1,194 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 namespace Lab_7
 {
-    public class Green_4
+    public abstract class Discipline
     {
-        public struct Participant
+        private string _name;
+        private Participant[] _participants;
+
+        public string Name => _name;
+        public Participant[] Participants => (Participant[])_participants?.Clone();
+
+        protected Discipline(string name)
         {
-            private string _name;
-            private string _surname;
-            private double[] _jumps;
-
-            public string Name => _name;
-            public string Surname => _surname;
-            public double[] Jumps => (double[])_jumps?.Clone();
-            
-            public double BestJump
-            {
-                get
-                {
-                    if (_jumps == null || _jumps.Length == 0) return 0;
-                    double max = _jumps[0];
-                    foreach (double jump in _jumps)
-                    {
-                        if (jump > max) max = jump;
-                    }
-                    return max;
-                }
-            }
-
-            public Participant(string name, string surname)
-            {
-                _name = name;
-                _surname = surname;
-                _jumps = new double[3];
-            }
-
-            public void Jump(double result)
-            {
-                for (int i = 0; i < _jumps.Length; i++)
-                {
-                    if (_jumps[i] == 0)
-                    {
-                        _jumps[i] = result;
-                        return;
-                    }
-                }
-            }
-
-            public static void Sort(Participant[] participants)
-            {
-                for (int i = 0; i < participants.Length - 1; i++)
-                {
-                    for (int j = 0; j < participants.Length - 1 - i; j++)
-                    {
-                        if (participants[j].BestJump < participants[j + 1].BestJump)
-                        {
-                            Participant temp = participants[j];
-                            participants[j] = participants[j + 1];
-                            participants[j + 1] = temp;
-                        }
-                    }
-                }
-            }
-
-            public void Print()
-            {
-                Console.WriteLine($"{Name} {Surname}. Лучший прыжок: {BestJump:F1} м");
-            }
+            _name = name;
+            _participants = Array.Empty<Participant>();
         }
 
-        public abstract class Discipline
+        public void Add(Participant participant)
         {
-            private string _name;
-            protected Participant[] _participants; 
-
-            public string Name => _name;
-            public Participant[] Participants => (Participant[])_participants?.Clone();
-
-            protected Discipline(string disciplineName)
+            if (_participants == null)
             {
-                _name = disciplineName;
-                _participants = new Participant[0];
+                _participants = new Participant[] { participant };
             }
-
-            public void Add(Participant newParticipant)
+            else
             {
-                Participant[] newList = new Participant[_participants.Length + 1];
-                for (int i = 0; i < _participants.Length; i++)
-                {
-                    newList[i] = _participants[i];
-                }
-                newList[_participants.Length] = newParticipant;
-                _participants = newList;
-            }
-
-            public void Add(params Participant[] newParticipants)
-            {
-                Participant[] newList = new Participant[_participants.Length + newParticipants.Length];
-                
-                for (int i = 0; i < _participants.Length; i++)
-                {
-                    newList[i] = _participants[i];
-                }
-                
-                for (int i = 0; i < newParticipants.Length; i++)
-                {
-                    newList[_participants.Length + i] = newParticipants[i];
-                }
-                
-                _participants = newList;
-            }
-
-            public void Sort()
-            {
-                Participant.Sort(_participants);
-            }
-
-            public abstract void Retry(int participantIndex);
-
-            protected void UpdateParticipants(Participant[] newParticipants)
-            {
+                var newParticipants = new Participant[_participants.Length + 1];
+                Array.Copy(_participants, newParticipants, _participants.Length);
+                newParticipants[^1] = participant;
                 _participants = newParticipants;
             }
+        }
 
-            public void Print()
+        public void Add(params Participant[] participants)
+        {
+            if (_participants == null)
             {
-                Console.WriteLine($"Дисциплина: {Name}");
-                Console.WriteLine("Участники:");
-                foreach (Participant p in _participants)
-                {
-                    p.Print();
-                }
+                _participants = (Participant[])participants.Clone();
+            }
+            else
+            {
+                var newParticipants = new Participant[_participants.Length + participants.Length];
+                Array.Copy(_participants, newParticipants, _participants.Length);
+                Array.Copy(participants, 0, newParticipants, _participants.Length, participants.Length);
+                _participants = newParticipants;
             }
         }
 
-        public class LongJump : Discipline
+        public void Sort()
         {
-            public LongJump() : base("Прыжки в длину") { }
+            Participant.Sort(_participants);
+        }
 
-            public override void Retry(int index)
+        public abstract void Retry(int index);
+
+        public void Print()
+        {
+            Console.WriteLine($"Discipline: {Name}");
+            Console.WriteLine("Participants:");
+            foreach (var participant in _participants)
             {
-                if (index < 0 || index >= _participants.Length)
-                {
-                    Console.WriteLine("Ошибка: неверный индекс участника");
-                    return;
-                }
-
-                Participant current = _participants[index];
-                Participant updated = new Participant(current.Name, current.Surname);
-                
-                updated.Jump(current.BestJump);
-                
-                updated.Jump(0);
-                updated.Jump(0);
-
-                Participant[] newList = (Participant[])_participants.Clone();
-                newList[index] = updated;
-                
-                UpdateParticipants(newList);
-                
-                Console.WriteLine($"{current.Name} получил дополнительные попытки!");
+                participant.Print();
             }
         }
 
-        public class HighJump : Discipline
+        protected void UpdateParticipant(int index, Participant newParticipant)
         {
-            public HighJump() : base("Прыжки в высоту") { }
-
-            public override void Retry(int index)
+            if (_participants != null && index >= 0 && index < _participants.Length)
             {
-                if (index < 0 || index >= _participants.Length)
+                _participants[index] = newParticipant;
+            }
+        }
+    }
+
+    public class LongJump : Discipline
+    {
+        public LongJump() : base("Long jump") { }
+
+        public override void Retry(int index)
+        {
+            if (Participants == null || index < 0 || index >= Participants.Length)
+                return;
+
+            var participant = Participants[index];
+            var jumpsList = participant.Jumps.ToList();
+            jumpsList.Add(0);
+            jumpsList.Add(0);
+            
+            var newParticipant = new Participant(participant.Name, participant.Surname);
+            foreach (var jump in jumpsList)
+            {
+                if (jump != 0)
                 {
-                    Console.WriteLine("Ошибка: неверный индекс участника");
+                    newParticipant.Jump(jump);
+                }
+            }
+            
+            UpdateParticipant(index, newParticipant);
+        }
+    }
+
+    public class HighJump : Discipline
+    {
+        public HighJump() : base("High jump") { }
+
+        public override void Retry(int index)
+        {
+            if (Participants == null || index < 0 || index >= Participants.Length)
+                return;
+
+            var participant = Participants[index];
+            var jumps = participant.Jumps;
+            
+            if (jumps.Length > 0)
+            {
+                var newParticipant = new Participant(participant.Name, participant.Surname);
+                for (int i = 0; i < jumps.Length - 1; i++)
+                {
+                    newParticipant.Jump(jumps[i]);
+                }
+                
+                UpdateParticipant(index, newParticipant);
+            }
+        }
+    }
+
+    public struct Participant
+    {
+        private string _name;
+        private string _surname;
+        private double[] _jumps;
+
+        public string Name => _name;
+        public string Surname => _surname;
+        public double[] Jumps => (double[])_jumps?.Clone();
+        
+        public double BestJump
+        {
+            get
+            {
+                if (_jumps != null && _jumps.Length > 0)
+                {
+                    return _jumps.Max();
+                }
+                return 0;
+            }
+        }
+
+        public Participant(string name, string surname)
+        {
+            _name = name;
+            _surname = surname;
+            _jumps = new double[3];
+        }
+
+        public void Jump(double result)
+        {
+            if (_jumps == null) return;
+            for (int i = 0; i < _jumps.Length; i++)
+            {
+                if (_jumps[i] == 0)
+                {
+                    _jumps[i] = result;
                     return;
                 }
+            }
+            
+            Array.Resize(ref _jumps, _jumps.Length + 1);
+            _jumps[^1] = result;
+        }
 
-                Participant current = _participants[index];
-                double[] jumps = current.Jumps;
-                
-                int lastJumpIndex = -1;
-                for (int i = jumps.Length - 1; i >= 0; i--)
+        public static void Sort(Participant[] array)
+        {
+            for (int i = 0; i < array.Length - 1; i++)
+            {
+                for (int j = 0; j < array.Length - i - 1; j++)
                 {
-                    if (jumps[i] != 0)
+                    if (array[j].BestJump < array[j + 1].BestJump)
                     {
-                        lastJumpIndex = i;
-                        break;
+                        Participant temp = array[j];
+                        array[j] = array[j + 1];
+                        array[j + 1] = temp;
                     }
                 }
-
-                if (lastJumpIndex == -1)
-                {
-                    Console.WriteLine("У участника нет выполненных прыжков");
-                    return;
-                }
-
-                Participant updated = new Participant(current.Name, current.Surname);
-                
-                for (int i = 0; i < lastJumpIndex; i++)
-                {
-                    updated.Jump(jumps[i]);
-                }
-                
-                updated.Jump(0);
-
-                Participant[] newList = (Participant[])_participants.Clone();
-                newList[index] = updated;
-                
-                UpdateParticipants(newList);
-                
-                Console.WriteLine($"{current.Name} может повторить последний прыжок!");
             }
+        }
+
+        public void Print()
+        {
+            Console.WriteLine($"{Name} {Surname} {BestJump}");
         }
     }
 }

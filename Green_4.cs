@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 namespace Lab_7
 {
     public class Green_4
@@ -15,18 +13,8 @@ namespace Lab_7
 
             public string Name => _name;
             public string Surname => _surname;
-            public double[] Jumps => (double[])_jumps?.Clone();
-            public double BestJump
-            {
-                get
-                {
-                    if (_jumps != null && _jumps.Length > 0)
-                    {
-                        return _jumps.Max();
-                    }
-                    return 0;
-                }
-            }
+            public double[] Jumps => (double[])_jumps.Clone();
+            public double BestJump => _jumps?.Length > 0 ? _jumps.Max() : 0;
 
             public Participant(string name, string surname)
             {
@@ -37,7 +25,6 @@ namespace Lab_7
 
             public void Jump(double result)
             {
-                if (_jumps == null) return;
                 for (int i = 0; i < _jumps.Length; i++)
                 {
                     if (_jumps[i] == 0)
@@ -50,23 +37,12 @@ namespace Lab_7
 
             public static void Sort(Participant[] array)
             {
-                for (int i = 0; i < array.Length - 1; i++)
-                {
-                    for (int j = 0; j < array.Length - i - 1; j++)
-                    {
-                        if (array[j].BestJump < array[j + 1].BestJump)
-                        {
-                            Participant temp = array[j];
-                            array[j] = array[j + 1];
-                            array[j + 1] = temp;
-                        }
-                    }
-                }
+                Array.Sort(array, (x, y) => y.BestJump.CompareTo(x.BestJump));
             }
 
             public void Print()
             {
-                System.Console.WriteLine($"{Name} {Surname} {BestJump}");
+                Console.WriteLine($"{Name} {Surname}: {BestJump}m");
             }
         }
 
@@ -76,18 +52,18 @@ namespace Lab_7
             private Participant[] _participants;
 
             public string Name => _name;
-            public Participant[] Participants => (Participant[])_participants?.Clone();
+            public Participant[] Participants => _participants;
 
             protected Discipline(string name)
             {
                 _name = name;
-                _participants = new Participant[0];
+                _participants = Array.Empty<Participant>();
             }
 
             public void Add(Participant participant)
             {
                 Array.Resize(ref _participants, _participants.Length + 1);
-                _participants[_participants.Length - 1] = participant;
+                _participants[^1] = participant;
             }
 
             public void Add(params Participant[] participants)
@@ -106,8 +82,8 @@ namespace Lab_7
 
             public void Print()
             {
-                System.Console.WriteLine($"Discipline: {Name}");
-                System.Console.WriteLine("Participants:");
+                Console.WriteLine($"Discipline: {Name}");
+                Console.WriteLine("Results:");
                 foreach (var participant in _participants)
                 {
                     participant.Print();
@@ -123,15 +99,12 @@ namespace Lab_7
             {
                 if (index >= 0 && index < Participants.Length)
                 {
-                    var participant = Participants[index];
-                    double bestJump = participant.BestJump;
-
+                    double best = Participants[index].BestJump;
                     Participants[index].Jump(0);
                     Participants[index].Jump(0);
-                    
-                    if (participant.BestJump > bestJump)
+                    if (Participants[index].BestJump < best)
                     {
-                        bestJump = participant.BestJump;
+                        Participants[index].Jump(best);
                     }
                 }
             }
@@ -145,10 +118,11 @@ namespace Lab_7
             {
                 if (index >= 0 && index < Participants.Length)
                 {
-                    var jumps = Participants[index].Jumps;
+                    double[] jumps = Participants[index].Jumps;
                     if (jumps.Length > 0)
                     {
-                        jumps[jumps.Length - 1] = 0;
+                        jumps[^1] = 0;
+                        Participants[index].Jump(0);
                     }
                 }
             }

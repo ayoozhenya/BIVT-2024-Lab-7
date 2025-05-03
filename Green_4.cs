@@ -123,7 +123,16 @@ namespace Lab_7
             {
                 if (index >= 0 && index < Participants.Length)
                 {
-                    double best = Participants[index].BestJump;
+                    var participant = Participants[index];
+                    double bestJump = participant.BestJump;
+
+                    Participants[index].Jump(0);
+                    Participants[index].Jump(0);
+                    
+                    if (participant.BestJump > bestJump)
+                    {
+                        bestJump = participant.BestJump;
+                    }
                 }
             }
         }
@@ -136,9 +145,10 @@ namespace Lab_7
             {
                 if (index >= 0 && index < Participants.Length)
                 {
-                    double[] jumps = Participants[index].Jumps;
+                    var jumps = Participants[index].Jumps;
                     if (jumps.Length > 0)
                     {
+                        jumps[jumps.Length - 1] = 0;
                     }
                 }
             }

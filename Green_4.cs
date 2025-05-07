@@ -13,8 +13,8 @@ namespace Lab_7
 
             public string Name => _name;
             public string Surname => _surname;
-            public double[] Jumps => (double[])_jumps.Clone();
-            public double BestJump => _jumps?.Length > 0 ? _jumps.Max() : 0;
+            public double[] Jumps => _jumps != null ? (double[])_jumps.Clone() : null;
+            public double BestJump => _jumps != null && _jumps.Length > 0 ? _jumps.Max() : 0;
 
             public Participant(string name, string surname)
             {
@@ -25,6 +25,8 @@ namespace Lab_7
 
             public void Jump(double result)
             {
+                if (_jumps == null) return;
+
                 for (int i = 0; i < _jumps.Length; i++)
                 {
                     if (_jumps[i] == 0)
@@ -37,12 +39,21 @@ namespace Lab_7
 
             public static void Sort(Participant[] array)
             {
-                Array.Sort(array, (x, y) => y.BestJump.CompareTo(x.BestJump));
+                for (int i = 0; i < array.Length - 1; i++)
+                {
+                    for (int j = 0; j < array.Length - i - 1; j++)
+                    {
+                        if (array[j].BestJump < array[j + 1].BestJump)
+                        {
+                            (array[j], array[j + 1]) = (array[j + 1], array[j]);
+                        }
+                    }
+                }
             }
 
             public void Print()
             {
-                Console.WriteLine($"{Name} {Surname}: {BestJump}m");
+                Console.WriteLine($"{Name} {Surname} {BestJump}");
             }
         }
 
@@ -52,7 +63,7 @@ namespace Lab_7
             private Participant[] _participants;
 
             public string Name => _name;
-            public Participant[] Participants => _participants;
+            public Participant[] Participants => _participants?.Clone() as Participant[];
 
             protected Discipline(string name)
             {
@@ -83,7 +94,7 @@ namespace Lab_7
             public void Print()
             {
                 Console.WriteLine($"Discipline: {Name}");
-                Console.WriteLine("Results:");
+                Console.WriteLine("Participants:");
                 foreach (var participant in _participants)
                 {
                     participant.Print();
@@ -97,16 +108,11 @@ namespace Lab_7
 
             public override void Retry(int index)
             {
-                if (index >= 0 && index < Participants.Length)
-                {
-                    double best = Participants[index].BestJump;
-                    Participants[index].Jump(0);
-                    Participants[index].Jump(0);
-                    if (Participants[index].BestJump < best)
-                    {
-                        Participants[index].Jump(best);
-                    }
-                }
+                if (_participants == null || index < 0 || index >= _participants.Length)
+                    return;
+
+                var participant = _participants[index];
+                _participants[index] = new Participant(participant.Name, participant.Surname);
             }
         }
 
@@ -116,15 +122,22 @@ namespace Lab_7
 
             public override void Retry(int index)
             {
-                if (index >= 0 && index < Participants.Length)
+                if (_participants == null || index < 0 || index >= _participants.Length)
+                    return;
+
+                var jumps = _participants[index].Jumps;
+                if (jumps == null || jumps.Length == 0)
+                    return;
+
+                var newParticipant = new Participant(_participants[index].Name, _participants[index].Surname);
+                for (int i = 0; i < jumps.Length - 1; i++)
                 {
-                    double[] jumps = Participants[index].Jumps;
-                    if (jumps.Length > 0)
+                    if (jumps[i] != 0)
                     {
-                        jumps[^1] = 0;
-                        Participants[index].Jump(0);
+                        newParticipant.Jump(jumps[i]);
                     }
                 }
+                _participants[index] = newParticipant;
             }
         }
     }

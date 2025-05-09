@@ -63,7 +63,7 @@ namespace Lab_7
             private Participant[] _participants;
 
             public string Name => _name;
-            public Participant[] Participants => _participants?.Clone() as Participant[];
+            public Participant[] Participants => _participants;
 
             protected Discipline(string name)
             {
@@ -130,7 +130,7 @@ namespace Lab_7
                     return;
 
                 var newParticipant = new Participant(_participants[index].Name, _participants[index].Surname);
-                for (int i = 0; i < jumps.Length - 1; i++)
+                for (int i = 0; i < jumps.Length; i++)
                 {
                     if (jumps[i] != 0)
                     {
